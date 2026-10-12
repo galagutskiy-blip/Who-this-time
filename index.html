@@ -1,0 +1,1619 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#1e293b">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Линия">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <title>Линия · Статистика + Комментарии</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      height: 100%;
+      min-height: 100dvh;
+    }
+    body {
+      background: #f1f5f9;
+      font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+      color: #0f172a;
+      padding: calc(env(safe-area-inset-top, 0px) + 12px) 12px calc(env(safe-area-inset-bottom, 0px) + 12px);
+      overflow-x: hidden;
+      overscroll-behavior-y: contain;
+    }
+    .container {
+      max-width: 1300px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 32px;
+      padding: 20px 18px 28px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.06);
+      position: relative;
+    }
+    @media (min-width: 700px) {
+      .container { padding: 24px 28px 32px; }
+    }
+    .header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .header-row h1 {
+      font-weight: 600;
+      font-size: 1.3rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 0;
+    }
+    .header-row h1 small {
+      font-size: 0.75rem;
+      font-weight: 400;
+      color: #475569;
+    }
+    .add-btn-wrapper { display: flex; align-items: center; flex-shrink: 0; }
+    .add-btn-wrapper .btn {
+      padding: 8px 18px;
+      font-size: 0.9rem;
+      border-radius: 40px;
+      background: #2563eb;
+      color: white;
+      box-shadow: 0 2px 8px rgba(37,99,235,0.25);
+      white-space: nowrap;
+      transition: all 0.2s ease;
+      min-height: 40px;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .add-btn-wrapper .btn:hover { background: #1d4ed8; transform: scale(1.02); }
+    @media (max-width: 480px) {
+      .header-row { flex-direction: column; align-items: stretch; }
+      .header-row h1 { font-size: 1.15rem; justify-content: center; text-align: center; }
+      .add-btn-wrapper .btn {
+        padding: 12px 20px;
+        font-size: 1rem;
+        width: 100%;
+        justify-content: center;
+        min-height: 50px;
+      }
+    }
+    @media (min-width: 481px) and (max-width: 820px) {
+      .header-row h1 { font-size: 1.15rem; }
+      .add-btn-wrapper .btn { padding: 8px 16px; font-size: 0.85rem; min-height: 38px; }
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 820px) { .grid-2 { grid-template-columns: 1fr; } }
+    .card {
+      background: #f8fafc;
+      border-radius: 24px;
+      padding: 16px 16px 20px;
+      border: 1px solid #e2e8f0;
+    }
+    .card h2 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #0f172a;
+    }
+    .btn {
+      background: #1e293b;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 40px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: white;
+      cursor: pointer;
+      transition: 0.15s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border: 1px solid transparent;
+    }
+    .btn-primary { background: #2563eb; color: white; }
+    .btn-primary:hover { background: #1d4ed8; transform: scale(0.97); }
+    .btn-outline { background: transparent; border: 1px solid #94a3b8; color: #1e293b; }
+    .btn-outline:hover { background: #e9edf2; }
+    .btn-success { background: #059669; }
+    .btn-success:hover { background: #047857; }
+    .btn-danger { background: #dc2626; }
+    .btn-danger:hover { background: #b91c1c; }
+    .btn-sm { padding: 6px 14px; font-size: 0.8rem; min-height: 36px; }
+    .btn-xs { padding: 4px 10px; font-size: 0.72rem; }
+    .flex-between { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .history-list {
+      max-height: 450px;
+      overflow-y: auto;
+      margin-top: 8px;
+      padding-right: 4px;
+      transition: max-height 0.3s ease;
+      -webkit-overflow-scrolling: touch;
+    }
+    .history-list.collapsed { max-height: 0; overflow: hidden; margin-top: 0; padding-right: 0; }
+    .history-item {
+      background: white;
+      border-radius: 16px;
+      padding: 10px 14px;
+      margin-bottom: 8px;
+      border: 1px solid #e2e8f0;
+      transition: 0.1s;
+    }
+    .history-item.penalty { border-left: 4px solid #ef4444; background: #fef2f2; }
+    .history-item.editing { background: #fef9c3; border-color: #eab308; }
+    .history-item .header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+    .history-item .main-info {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.85rem;
+    }
+    .history-item .badge {
+      background: #dbeafe;
+      color: #1e4ab0;
+      padding: 2px 12px;
+      border-radius: 30px;
+      font-weight: 600;
+      font-size: 0.7rem;
+    }
+    .history-item .badge.penalty-badge { background: #fecaca; color: #991b1b; }
+    .history-item .comment {
+      font-size: 0.8rem;
+      color: #475569;
+      background: #f1f5f9;
+      padding: 6px 12px;
+      border-radius: 12px;
+      margin-top: 4px;
+      word-break: break-word;
+      display: inline-block;
+      max-width: 100%;
+      user-select: text;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .history-item .comment:hover { background: #e2e8f0; }
+    .history-item .comment::selection { background: #2563eb; color: #ffffff; }
+    .history-item .comment.penalty-comment { background: #fee2e2; color: #991b1b; }
+    .history-item .comment.penalty-comment:hover { background: #fecaca; }
+    .history-item .comment.penalty-comment::selection { background: #dc2626; color: #ffffff; }
+    .history-item .actions { display: flex; gap: 4px; align-items: center; }
+    .history-item .del, .history-item .edit, .history-item .save-edit, .history-item .cancel-edit {
+      border: none;
+      border-radius: 30px;
+      padding: 4px 12px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 0.72rem;
+      transition: 0.1s;
+    }
+    .history-item .del { color: #b91c1c; background: #fee2e2; }
+    .history-item .del:hover { background: #fecaca; }
+    .history-item .edit { color: #1e4ab0; background: #dbeafe; }
+    .history-item .edit:hover { background: #bfdbfe; }
+    .history-item .save-edit { color: #065f46; background: #d1fae5; }
+    .history-item .save-edit:hover { background: #a7f3d0; }
+    .history-item .cancel-edit { color: #991b1b; background: #fee2e2; }
+    .history-item .cancel-edit:hover { background: #fecaca; }
+    .empty-state { color: #64748b; font-style: italic; padding: 12px 0; text-align: center; }
+    .employee-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: #e9edf2;
+      padding: 2px 10px 2px 14px;
+      border-radius: 40px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+    .employee-tag .remove-employee {
+      background: none;
+      border: none;
+      color: #991b1b;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 1rem;
+      line-height: 1;
+      padding: 0 2px;
+    }
+    .graph-bar-container { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+    .graph-bar-row { display: flex; align-items: center; gap: 8px; }
+    .graph-bar-label {
+      width: 110px;
+      font-weight: 500;
+      font-size: 0.78rem;
+      text-align: right;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    .graph-bar-label .last-shipment {
+      font-weight: 400;
+      font-size: 0.6rem;
+      color: #64748b;
+      background: #e9edf2;
+      padding: 0 6px;
+      border-radius: 10px;
+      white-space: nowrap;
+    }
+    .graph-bar-track {
+      flex: 1;
+      height: 22px;
+      background: #e2e8f0;
+      border-radius: 40px;
+      overflow: hidden;
+      position: relative;
+    }
+    .graph-bar-fill {
+      height: 100%;
+      border-radius: 40px;
+      transition: width 0.3s ease, background 0.3s ease;
+      width: 0%;
+    }
+    .graph-bar-fill.color-leader { background: #dc2626; }
+    .graph-bar-fill.color-high { background: #eab308; }
+    .graph-bar-fill.color-medium { background: #2563eb; }
+    .graph-bar-fill.color-low { background: #22c55e; }
+    .graph-bar-value {
+      width: 36px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #1e293b;
+      text-align: right;
+      flex-shrink: 0;
+    }
+    .inline-flex { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+    .mt-1 { margin-top: 6px; }
+    .edit-form-inline { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+    .edit-form-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+    .edit-form-inline select, .edit-form-inline input, .edit-form-inline textarea {
+      padding: 6px 10px;
+      border-radius: 40px;
+      border: 1px solid #94a3b8;
+      font-size: 0.8rem;
+      background: white;
+      font-family: inherit;
+    }
+    .edit-form-inline textarea {
+      border-radius: 12px;
+      resize: vertical;
+      min-height: 40px;
+      width: 100%;
+      font-size: 0.8rem;
+    }
+    .edit-form-inline .btn-group { display: flex; gap: 4px; }
+    hr { border: 0; border-top: 2px dashed #d1d9e6; margin: 18px 0; }
+    .comment-icon { opacity: 0.6; font-size: 0.8rem; }
+    .stat-block {
+      background: white;
+      border-radius: 20px;
+      padding: 12px 14px;
+      border: 1px solid #e2e8f0;
+    }
+    .suggestion-box {
+      margin-top: 10px;
+      background: #eef2ff;
+      border-radius: 40px;
+      padding: 8px 16px;
+      font-weight: 500;
+      border: 1px solid #c7d2fe;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .suggestion-box .label { color: #4338ca; }
+    .suggestion-box .value { color: #1e293b; font-weight: 600; }
+    .toggle-history {
+      cursor: pointer;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .toggle-history .arrow {
+      transition: transform 0.3s ease;
+      display: inline-block;
+    }
+    .toggle-history .arrow.open { transform: rotate(180deg); }
+    .stats-metrics {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+      padding: 8px 12px;
+      background: #f1f5f9;
+      border-radius: 16px;
+      font-size: 0.82rem;
+    }
+    .stats-metrics .metric { display: flex; align-items: center; gap: 4px; }
+    .stats-metrics .metric .label { color: #64748b; }
+    .stats-metrics .metric .value { font-weight: 600; color: #0f172a; }
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 6px;
+      font-size: 0.7rem;
+      color: #475569;
+      padding: 4px 0;
+    }
+    .legend-item { display: flex; align-items: center; gap: 3px; }
+    .legend-dot.leader { background: #dc2626; }
+    .legend-dot.high { background: #eab308; }
+    .legend-dot.medium { background: #2563eb; }
+    .legend-dot.low { background: #22c55e; }
+    .penalty-stats {
+      margin-top: 6px;
+      padding: 6px 12px;
+      background: #fef2f2;
+      border-radius: 12px;
+      border: 1px solid #fecaca;
+      font-size: 0.8rem;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .penalty-stats .label { color: #991b1b; font-weight: 500; }
+    .penalty-stats .value { color: #dc2626; font-weight: 600; }
+
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+      padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: white;
+      border-radius: 28px;
+      padding: 24px 22px;
+      max-width: 520px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      animation: modalIn 0.25s ease;
+      -webkit-overflow-scrolling: touch;
+    }
+    @media (min-width: 700px) {
+      .modal { padding: 32px 36px; }
+    }
+    .modal.small { max-width: 440px; }
+    @keyframes modalIn {
+      from { transform: scale(0.95) translateY(20px); opacity: 0; }
+      to { transform: scale(1) translateY(0); opacity: 1; }
+    }
+    .modal h2 {
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #0f172a;
+    }
+    .modal .form-group { margin-bottom: 14px; }
+    .modal .form-group label {
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      color: #475569;
+      margin-bottom: 4px;
+    }
+    .modal .form-group select,
+    .modal .form-group input,
+    .modal .form-group textarea {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 40px;
+      border: 1px solid #cbd5e1;
+      background: white;
+      font-size: 1rem;
+      font-weight: 500;
+      transition: 0.15s;
+      font-family: inherit;
+    }
+    .modal .form-group textarea {
+      border-radius: 16px;
+      resize: vertical;
+      min-height: 50px;
+      font-weight: 400;
+    }
+    .modal .form-group select:focus,
+    .modal .form-group input:focus,
+    .modal .form-group textarea:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
+    }
+    .modal .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 0;
+      margin-bottom: 6px;
+    }
+    .modal .checkbox-group input[type="checkbox"] {
+      width: 22px;
+      height: 22px;
+      accent-color: #ef4444;
+      cursor: pointer;
+    }
+    .modal .checkbox-group label {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #475569;
+      cursor: pointer;
+    }
+    .modal .btn-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 18px;
+      justify-content: flex-end;
+    }
+    .modal .btn-row .btn {
+      padding: 12px 24px;
+      font-size: 0.95rem;
+      flex: 1;
+    }
+    .modal .btn-row .btn-cancel {
+      background: #e9edf2;
+      color: #1e293b;
+    }
+    .modal .btn-row .btn-cancel:hover { background: #d1d9e6; }
+
+    .settings-fab {
+      position: fixed;
+      bottom: calc(env(safe-area-inset-bottom, 0px) + 20px);
+      right: calc(env(safe-area-inset-right, 0px) + 20px);
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: #1e293b;
+      color: white;
+      border: none;
+      font-size: 26px;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+      transition: 0.2s;
+      z-index: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+    .settings-fab:hover {
+      transform: scale(1.08);
+      background: #0f172a;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.35);
+    }
+
+    .employee-list-modal {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin: 10px 0 16px 0;
+      max-height: 260px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .employee-list-modal .emp-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 10px 8px 16px;
+      background: #f8fafc;
+      border-radius: 40px;
+      border: 1px solid #e2e8f0;
+      font-size: 0.9rem;
+      gap: 6px;
+    }
+    .employee-list-modal .emp-item .emp-name {
+      font-weight: 500;
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .employee-list-modal .emp-item .emp-count {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: #1e4ab0;
+      background: #dbeafe;
+      padding: 2px 10px;
+      border-radius: 12px;
+      flex-shrink: 0;
+    }
+    .employee-list-modal .emp-item .emp-count.is-reset { background: #fecaca; color: #991b1b; }
+    .employee-list-modal .emp-item .emp-actions { display: flex; gap: 4px; flex-shrink: 0; }
+    .employee-list-modal .emp-item .emp-reset {
+      background: #e9edf2;
+      border: none;
+      color: #475569;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 0.8rem;
+      line-height: 1;
+      padding: 6px 12px;
+      border-radius: 30px;
+      transition: 0.1s;
+    }
+    .employee-list-modal .emp-item .emp-reset:hover { background: #cbd5e1; color: #0f172a; }
+    .employee-list-modal .emp-item .emp-reset.is-reset { background: #fecaca; color: #991b1b; }
+    .employee-list-modal .emp-item .emp-reset.is-reset:hover { background: #fca5a5; }
+
+    .add-employee-row { display: flex; gap: 8px; margin-top: 4px; }
+    .add-employee-row input {
+      flex: 1;
+      padding: 12px 14px;
+      border-radius: 40px;
+      border: 1px solid #cbd5e1;
+      font-size: 1rem;
+      min-width: 0;
+    }
+    .add-employee-row input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
+    }
+
+    .queue-badge {
+      background: #fef3c7;
+      color: #92400e;
+      padding: 1px 8px;
+      border-radius: 12px;
+      font-size: 0.6rem;
+      font-weight: 700;
+      margin-left: 4px;
+      border: 1px solid #f59e0b;
+    }
+
+    .modal .form-group textarea { background: white; }
+
+    /* Тост-уведомление о сохранении/офлайне */
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: calc(env(safe-area-inset-bottom, 0px) + 90px);
+      transform: translateX(-50%) translateY(20px);
+      background: #0f172a;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 40px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s, transform 0.25s;
+      z-index: 2000;
+      max-width: 90vw;
+      text-align: center;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .toast.warn { background: #b45309; }
+
+    /* Индикатор офлайн-режима */
+    .offline-badge {
+      position: fixed;
+      top: calc(env(safe-area-inset-top, 0px) + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: #b45309;
+      color: white;
+      padding: 4px 14px;
+      border-radius: 40px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      z-index: 1500;
+      display: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .offline-badge.visible { display: block; }
+  </style>
+</head>
+<body>
+<div class="offline-badge" id="offlineBadge">📴 Офлайн-режим</div>
+<div class="toast" id="toast"></div>
+
+<div class="container">
+  <div class="header-row">
+    <h1>
+      📋 Линия · Статистика
+      <small>сохраняется автоматически</small>
+    </h1>
+    <div class="add-btn-wrapper">
+      <button class="btn" id="openModalBtn">➕ Добавить отправку</button>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div>
+      <div class="card">
+        <h2>📊 Статистика · График отправок</h2>
+        <div id="graphContainer" class="graph-bar-container stat-block"></div>
+        <div id="penaltyStats" class="penalty-stats"></div>
+        <div class="legend">
+          <span class="legend-item"><span class="legend-dot leader"></span> Лидер 🔴</span>
+          <span class="legend-item"><span class="legend-dot high"></span> Высокая 🟡</span>
+          <span class="legend-item"><span class="legend-dot medium"></span> Средняя 🔵</span>
+          <span class="legend-item"><span class="legend-dot low"></span> Низкая 🟢</span>
+          <span class="legend-item">💤 Аутсайдер</span>
+          <span class="legend-item">🆕 Нет отправок</span>
+        </div>
+        <div id="statsMetrics" class="stats-metrics"></div>
+        <div style="margin-top: 10px;">
+          <button class="btn btn-outline btn-sm" id="resetStatsBtn">🔄 Сбросить статистику</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="flex-between">
+        <div class="toggle-history" id="toggleHistory">
+          <h2 style="margin-bottom: 0; cursor: pointer;">
+            📜 История
+            <span style="font-weight:400;font-size:0.9rem;color:#475569;">
+              (всего: <span id="historyCount">0</span>)
+            </span>
+          </h2>
+          <span class="arrow" id="historyArrow">▼</span>
+        </div>
+        <button class="btn btn-outline btn-sm" id="clearHistoryBtn">🗑️ Очистить</button>
+      </div>
+
+      <div id="historyList" class="history-list collapsed">
+        <div class="empty-state">Пока нет записей</div>
+      </div>
+      <div style="margin-top: 14px; display: flex; gap: 8px; flex-wrap: wrap;">
+        <button class="btn btn-outline btn-sm" id="exportBtn">📥 Экспорт JSON</button>
+        <button class="btn btn-outline btn-sm" id="importBtn">📤 Импорт JSON</button>
+        <input type="file" id="fileInput" accept=".json" style="display:none">
+      </div>
+    </div>
+  </div>
+  <hr>
+  <div style="font-size: 0.78rem; color: #64748b; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
+    <span>💾 Данные сохраняются на устройстве.</span>
+    <span>✏️ Нажмите ✎ для редактирования · 📋 Клик по комментарию — выделить</span>
+  </div>
+</div>
+
+<button class="settings-fab" id="settingsFab" title="Управление сотрудниками">⚙️</button>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h2>➕ Добавить отправку</h2>
+    <div class="form-group">
+      <label>Сотрудник</label>
+      <select id="modalEmployeeSelect"></select>
+    </div>
+    <div class="form-group">
+      <label>Длительность</label>
+      <select id="modalDurationType">
+        <option value="полный день">полный день (12 ч)</option>
+        <option value="часы">часы (укажи)</option>
+      </select>
+    </div>
+    <div class="form-group" id="modalHoursGroup">
+      <label>Часы</label>
+      <input type="number" id="modalHoursInput" min="1" max="12" value="12">
+    </div>
+    <div class="form-group">
+      <label>Дата</label>
+      <input type="date" id="modalDateInput">
+    </div>
+    <div class="form-group" style="position: relative;">
+      <label>Комментарий (необязательно)</label>
+      <textarea id="modalCommentInput" placeholder="Дополнительная информация..." rows="2" list="commentSuggestions"></textarea>
+      <datalist id="commentSuggestions"></datalist>
+    </div>
+    <div class="checkbox-group">
+      <input type="checkbox" id="modalPenaltyCheck">
+      <label for="modalPenaltyCheck">⚠️ Внеочередная (штрафная) — не учитывается в статистике</label>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-cancel" id="modalCancelBtn">Отмена</button>
+      <button class="btn btn-primary" id="modalAddBtn">➕ Добавить</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="settingsOverlay">
+  <div class="modal small">
+    <h2>⚙️ Управление сотрудниками</h2>
+    <div style="font-size:0.75rem;color:#64748b;margin-bottom:8px;">
+      🔄 — уменьшить счётчик на 1. История и давность последней отправки сохраняются.
+    </div>
+    <div class="employee-list-modal" id="settingsEmployeeList"></div>
+    <div class="add-employee-row">
+      <input type="text" id="settingsNewEmployeeInput" placeholder="Имя нового сотрудника">
+      <button class="btn btn-success btn-sm" id="settingsAddEmployeeBtn">➕ Добавить</button>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-cancel" id="settingsCloseBtn">Закрыть</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function(){
+    // ===== проверка доступности localStorage =====
+    const storageAvailable = (function() {
+      try {
+        const test = '__test__';
+        localStorage.setItem(test, test);
+        localStorage.removeItem(test);
+        return true;
+      } catch (e) {
+        return false;
+      }
+    })();
+
+    let storageWarned = false;
+
+    // ===== состояние =====
+    let employees = ['Женя', 'Тема', 'Сухроб', 'Сеня', 'Макс', 'Кирюха'];
+    let records = [];
+    let nextId = 1;
+    let editingId = null;
+    let historyCollapsed = true;
+    let commentHistory = [];
+    let resetAmounts = {};
+
+    // DOM
+    const graphContainer = document.getElementById('graphContainer');
+    const statsMetrics = document.getElementById('statsMetrics');
+    const penaltyStats = document.getElementById('penaltyStats');
+    const historyList = document.getElementById('historyList');
+    const historyCount = document.getElementById('historyCount');
+    const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+    const resetStatsBtn = document.getElementById('resetStatsBtn');
+    const exportBtn = document.getElementById('exportBtn');
+    const importBtn = document.getElementById('importBtn');
+    const fileInput = document.getElementById('fileInput');
+    const toggleHistory = document.getElementById('toggleHistory');
+    const historyArrow = document.getElementById('historyArrow');
+    const openModalBtn = document.getElementById('openModalBtn');
+    const modalOverlay = document.getElementById('modalOverlay');
+    const modalCancelBtn = document.getElementById('modalCancelBtn');
+    const modalAddBtn = document.getElementById('modalAddBtn');
+    const modalEmployeeSelect = document.getElementById('modalEmployeeSelect');
+    const modalDurationType = document.getElementById('modalDurationType');
+    const modalHoursGroup = document.getElementById('modalHoursGroup');
+    const modalHoursInput = document.getElementById('modalHoursInput');
+    const modalDateInput = document.getElementById('modalDateInput');
+    const modalCommentInput = document.getElementById('modalCommentInput');
+    const modalPenaltyCheck = document.getElementById('modalPenaltyCheck');
+    const commentSuggestions = document.getElementById('commentSuggestions');
+    const settingsFab = document.getElementById('settingsFab');
+    const settingsOverlay = document.getElementById('settingsOverlay');
+    const settingsEmployeeList = document.getElementById('settingsEmployeeList');
+    const settingsNewEmployeeInput = document.getElementById('settingsNewEmployeeInput');
+    const settingsAddEmployeeBtn = document.getElementById('settingsAddEmployeeBtn');
+    const settingsCloseBtn = document.getElementById('settingsCloseBtn');
+    const toastEl = document.getElementById('toast');
+    const offlineBadge = document.getElementById('offlineBadge');
+
+    // ===== тост =====
+    let toastTimer = null;
+    function showToast(msg, warn) {
+      toastEl.textContent = msg;
+      toastEl.classList.toggle('warn', !!warn);
+      toastEl.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toastEl.classList.remove('show');
+      }, 2200);
+    }
+
+    function updateOnlineStatus() {
+      if (navigator.onLine) {
+        offlineBadge.classList.remove('visible');
+      } else {
+        offlineBadge.classList.add('visible');
+      }
+    }
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+    updateOnlineStatus();
+
+    function updateModalHoursVisibility() {
+      if (modalDurationType.value === 'полный день') {
+        modalHoursGroup.style.display = 'none';
+        modalHoursInput.value = 12;
+      } else {
+        modalHoursGroup.style.display = 'block';
+      }
+    }
+
+    function getLastShipmentDate(employeeName) {
+      const employeeRecords = records
+        .filter(r => r.employee === employeeName && !r.penalty)
+        .sort((a, b) => (a.date < b.date ? 1 : -1));
+      if (employeeRecords.length === 0) return '1970-01-01';
+      return employeeRecords[0].date;
+    }
+
+    function getDaysSinceLastShipment(employeeName) {
+      const lastDate = getLastShipmentDate(employeeName);
+      if (lastDate === '1970-01-01') return '—';
+      const today = new Date();
+      const last = new Date(lastDate);
+      const diffTime = today - last;
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      return diffDays;
+    }
+
+    function getEffectiveCount(employeeName) {
+      const total = records.filter(r => !r.penalty && r.employee === employeeName).length;
+      const reduced = resetAmounts[employeeName] || 0;
+      return Math.max(0, total - reduced);
+    }
+
+    function getSortedEmployees() {
+      const countMap = {};
+      employees.forEach(name => countMap[name] = getEffectiveCount(name));
+      return [...employees].sort((a, b) => {
+        const countA = countMap[a] || 0;
+        const countB = countMap[b] || 0;
+        if (countA !== countB) return countA - countB;
+        const dateA = getLastShipmentDate(a);
+        const dateB = getLastShipmentDate(b);
+        return dateA.localeCompare(dateB);
+      });
+    }
+
+    function loadFromStorage() {
+      if (!storageAvailable) {
+        if (!storageWarned) {
+          storageWarned = true;
+          showToast('⚠️ Хранилище недоступно. Данные не сохранятся.', true);
+        }
+        // всё равно заполняем демо-данными
+        records = [
+          { id: nextId++, employee: 'Женя', date: '2026-09-05', duration: 'полный день', hours: null, comment: 'Первая смена', penalty: false },
+          { id: nextId++, employee: 'Тема', date: '2026-09-06', duration: 'часы', hours: 4, comment: 'Тестирование', penalty: false },
+          { id: nextId++, employee: 'Сухроб', date: '2026-09-07', duration: 'полный день', hours: null, comment: '', penalty: false },
+        ];
+        records.forEach(r => {
+          if (r.comment && r.comment.trim()) {
+            addCommentToHistory(r.comment.trim());
+          }
+        });
+        return;
+      }
+      try {
+        const stored = localStorage.getItem('lineData');
+        if (stored) {
+          const data = JSON.parse(stored);
+          if (data.employees && Array.isArray(data.employees)) employees = data.employees;
+          if (data.records && Array.isArray(data.records)) {
+            records = data.records;
+            let max = 0;
+            records.forEach(r => { if (r.id > max) max = r.id; });
+            nextId = max + 1;
+          }
+          if (data.historyCollapsed !== undefined) historyCollapsed = data.historyCollapsed;
+          if (data.commentHistory && Array.isArray(data.commentHistory)) {
+            commentHistory = data.commentHistory;
+          }
+          if (data.resetAmounts && typeof data.resetAmounts === 'object') {
+            resetAmounts = data.resetAmounts;
+          }
+          return;
+        }
+      } catch (e) {}
+      // демо-данные
+      records = [
+        { id: nextId++, employee: 'Женя', date: '2026-09-05', duration: 'полный день', hours: null, comment: 'Первая смена', penalty: false },
+        { id: nextId++, employee: 'Тема', date: '2026-09-06', duration: 'часы', hours: 4, comment: 'Тестирование', penalty: false },
+        { id: nextId++, employee: 'Сухроб', date: '2026-09-07', duration: 'полный день', hours: null, comment: '', penalty: false },
+      ];
+      records.forEach(r => {
+        if (r.comment && r.comment.trim()) {
+          addCommentToHistory(r.comment.trim());
+        }
+      });
+    }
+
+    function saveToStorage() {
+      if (!storageAvailable) {
+        if (!storageWarned) {
+          storageWarned = true;
+          showToast('⚠️ Хранилище недоступно. Данные не сохранятся.', true);
+        }
+        return;
+      }
+      try {
+        localStorage.setItem('lineData', JSON.stringify({
+          employees, records, historyCollapsed, commentHistory, resetAmounts
+        }));
+      } catch (e) {
+        if (!storageWarned) {
+          storageWarned = true;
+          showToast('⚠️ Не удалось сохранить данные (переполнение?).', true);
+        }
+      }
+    }
+
+    function addCommentToHistory(text) {
+      const trimmed = text.trim();
+      if (!trimmed) return;
+      commentHistory = commentHistory.filter(c => c !== trimmed);
+      commentHistory.unshift(trimmed);
+      if (commentHistory.length > 50) {
+        commentHistory = commentHistory.slice(0, 50);
+      }
+      updateCommentSuggestions();
+      saveToStorage();
+    }
+
+    function updateCommentSuggestions() {
+      commentSuggestions.innerHTML = '';
+      commentHistory.forEach(text => {
+        const option = document.createElement('option');
+        option.value = text;
+        commentSuggestions.appendChild(option);
+      });
+    }
+
+    function renderAll() {
+      renderModalEmployeeSelect();
+      renderSettingsEmployeeList();
+      renderGraphAndMetrics();
+      renderHistory();
+      updateSuggestion();
+      historyCount.textContent = records.length;
+      updateHistoryToggle();
+      updateCommentSuggestions();
+      updateModalHoursVisibility();
+    }
+
+    function renderModalEmployeeSelect() {
+      const current = modalEmployeeSelect.value;
+      modalEmployeeSelect.innerHTML = '';
+      const sorted = getSortedEmployees();
+      sorted.forEach((name, index) => {
+        const opt = document.createElement('option');
+        opt.value = name;
+        const label = index === 0 ? `${name} ⏰` : name;
+        opt.textContent = label;
+        modalEmployeeSelect.appendChild(opt);
+      });
+      if (sorted.includes(current)) {
+        modalEmployeeSelect.value = current;
+      } else {
+        modalEmployeeSelect.value = sorted[0] || '';
+      }
+    }
+
+    function renderSettingsEmployeeList() {
+      settingsEmployeeList.innerHTML = '';
+      if (employees.length === 0) {
+        settingsEmployeeList.innerHTML = '<div style="color:#64748b;font-style:italic;padding:8px 0;">Нет сотрудников</div>';
+        return;
+      }
+      employees.forEach(name => {
+        const count = getEffectiveCount(name);
+        const reduced = resetAmounts[name] || 0;
+        const div = document.createElement('div');
+        div.className = 'emp-item';
+        div.innerHTML = `
+          <span class="emp-name">${escapeHtml(name)}</span>
+          <span class="emp-count ${reduced > 0 ? 'is-reset' : ''}" title="Текущий счётчик${reduced > 0 ? ', уменьшен на ' + reduced : ''}">${count}</span>
+          <div class="emp-actions">
+            <button class="emp-reset ${reduced > 0 ? 'is-reset' : ''}" data-name="${escapeHtml(name)}" title="Уменьшить счётчик на 1">↺</button>
+            <button class="btn btn-danger btn-xs settings-remove" data-name="${escapeHtml(name)}" title="Удалить сотрудника">✕</button>
+          </div>
+        `;
+        settingsEmployeeList.appendChild(div);
+      });
+
+      document.querySelectorAll('.emp-reset').forEach(btn => {
+        btn.addEventListener('click', function() {
+          resetEmployeeCounter(this.dataset.name);
+        });
+      });
+      document.querySelectorAll('.settings-remove').forEach(btn => {
+        btn.addEventListener('click', function() {
+          removeEmployee(this.dataset.name);
+        });
+      });
+    }
+
+    function getLevelIcon(count, maxCount, avg, minCount) {
+      if (count === 0) return '🆕';
+      if (count === maxCount && maxCount > 0) return '⚡';
+      if (count === minCount && count < maxCount) return '💤';
+      if (count > avg * 1.2) return '🔥';
+      if (count >= avg * 0.8) return '👍';
+      return '👌';
+    }
+
+    function renderGraphAndMetrics() {
+      const countMap = {};
+      employees.forEach(name => countMap[name] = getEffectiveCount(name));
+      const counts = Object.values(countMap);
+      const total = counts.reduce((a, b) => a + b, 0);
+      const avg = counts.length > 0 ? total / counts.length : 0;
+      const maxCount = counts.length > 0 ? Math.max(...counts) : 0;
+      const minCount = counts.length > 0 ? Math.min(...counts) : 0;
+
+      let leader = null, outsider = null;
+      let maxVal = -1, minVal = Infinity;
+      for (const [name, count] of Object.entries(countMap)) {
+        if (count > maxVal) { maxVal = count; leader = name; }
+        if (count < minVal) { minVal = count; outsider = name; }
+      }
+
+      const sortedEmployees = getSortedEmployees();
+      let graphHtml = '';
+      sortedEmployees.forEach((name, index) => {
+        const count = countMap[name] || 0;
+        const percent = maxCount > 0 ? (count / maxCount) * 100 : 0;
+        const daysSince = getDaysSinceLastShipment(name);
+        const daysLabel = daysSince === '—' ? '🆕' : `${daysSince}д`;
+
+        let colorClass = 'color-low';
+        if (count === maxCount && maxCount > 0) colorClass = 'color-leader';
+        else if (count > avg * 1.2) colorClass = 'color-high';
+        else if (count >= avg * 0.8) colorClass = 'color-medium';
+        else colorClass = 'color-low';
+
+        const icon = getLevelIcon(count, maxCount, avg, minCount);
+        const queueMark = index === 0 ? ' ⏰' : '';
+
+        graphHtml += `
+          <div class="graph-bar-row">
+            <span class="graph-bar-label">
+              ${icon} ${escapeHtml(name)}${queueMark}
+              <span class="last-shipment" title="Дней с последней реальной отправки">${daysLabel}</span>
+            </span>
+            <div class="graph-bar-track">
+              <div class="graph-bar-fill ${colorClass}" style="width: ${percent}%;"></div>
+            </div>
+            <span class="graph-bar-value">${count}</span>
+          </div>
+        `;
+      });
+      graphContainer.innerHTML = graphHtml;
+
+      const penaltyRecords = records.filter(r => r.penalty);
+      const penaltyCount = penaltyRecords.length;
+      let penaltyHtml = `
+        <span class="label">⚠️ Штрафных отправок:</span>
+        <span class="value">${penaltyCount}</span>
+      `;
+      if (penaltyCount > 0) {
+        const penaltyByEmployee = {};
+        penaltyRecords.forEach(r => {
+          penaltyByEmployee[r.employee] = (penaltyByEmployee[r.employee] || 0) + 1;
+        });
+        const list = Object.entries(penaltyByEmployee)
+          .map(([name, count]) => `${name} (${count})`)
+          .join(', ');
+        penaltyHtml += `<span class="label">| По сотрудникам:</span><span class="value">${list}</span>`;
+      }
+      penaltyStats.innerHTML = penaltyHtml;
+
+      statsMetrics.innerHTML = `
+        <div class="metric">
+          <span class="label">📊 Всего (обычных):</span>
+          <span class="value">${total}</span>
+        </div>
+        <div class="metric">
+          <span class="label">📈 Среднее:</span>
+          <span class="value">${avg.toFixed(1)}</span>
+        </div>
+        <div class="metric">
+          <span class="label">⚡ Лидер:</span>
+          <span class="value">${leader || '—'} (${maxVal})</span>
+        </div>
+        <div class="metric">
+          <span class="label">💤 Аутсайдер:</span>
+          <span class="value">${outsider || '—'} (${minVal})</span>
+        </div>
+      `;
+    }
+
+    function renderHistory() {
+      if (records.length === 0) {
+        historyList.innerHTML = `<div class="empty-state">📭 История пуста</div>`;
+        return;
+      }
+      const sorted = [...records].sort((a,b) => (a.date < b.date ? 1 : -1));
+      let html = '';
+      sorted.forEach(r => {
+        const isEditing = (editingId === r.id);
+        let durText = r.duration;
+        if (r.duration === 'часы' && r.hours) durText = `${r.hours} ч.`;
+        else if (r.duration === 'часы') durText = 'часы';
+        else durText = 'полный день';
+        const dateStr = r.date || '—';
+        const comment = r.comment || '';
+        const hasComment = comment.trim().length > 0;
+        const isPenalty = r.penalty || false;
+
+        if (isEditing) {
+          const sortedEmployees = getSortedEmployees();
+          html += `
+            <div class="history-item editing" data-id="${r.id}">
+              <form class="edit-form-inline" data-id="${r.id}">
+                <div class="edit-form-row">
+                  <select class="edit-employee">
+                    ${sortedEmployees.map(e => `<option value="${escapeHtml(e)}" ${e === r.employee ? 'selected' : ''}>${escapeHtml(e)}</option>`).join('')}
+                  </select>
+                  <input type="date" class="edit-date" value="${r.date || ''}">
+                  <select class="edit-duration">
+                    <option value="полный день" ${r.duration === 'полный день' ? 'selected' : ''}>полный день</option>
+                    <option value="часы" ${r.duration === 'часы' ? 'selected' : ''}>часы</option>
+                  </select>
+                  <input type="number" class="edit-hours" min="1" max="12" value="${r.hours || 12}" style="width:60px;" placeholder="ч">
+                  <label style="font-size:0.7rem;display:flex;align-items:center;gap:4px;">
+                    <input type="checkbox" class="edit-penalty" ${isPenalty ? 'checked' : ''}> ⚠️
+                  </label>
+                </div>
+                <div class="edit-form-row">
+                  <textarea class="edit-comment" placeholder="Комментарий..." rows="2" style="flex:1;min-width:200px;" list="editCommentSuggestions">${comment}</textarea>
+                  <datalist id="editCommentSuggestions"></datalist>
+                  <div class="btn-group">
+                    <button type="button" class="save-edit">💾 Сохранить</button>
+                    <button type="button" class="cancel-edit">✕ Отмена</button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          `;
+        } else {
+          const penaltyClass = isPenalty ? 'penalty' : '';
+          const penaltyBadge = isPenalty ? '<span class="badge penalty-badge">⚠️ Штраф</span>' : '';
+          const commentClass = isPenalty ? 'penalty-comment' : '';
+          html += `
+            <div class="history-item ${penaltyClass}" data-id="${r.id}">
+              <div class="header">
+                <div class="main-info">
+                  <strong>${escapeHtml(r.employee)}</strong>
+                  <span>· ${dateStr}</span>
+                  <span class="badge">${durText}</span>
+                  ${penaltyBadge}
+                </div>
+                <div class="actions">
+                  <button class="edit" data-id="${r.id}">✎</button>
+                  <button class="del" data-id="${r.id}">✕</button>
+                </div>
+              </div>
+              ${hasComment ? `<div class="comment ${commentClass}" data-comment="${escapeHtml(comment)}" title="Клик — выделить для копирования">${escapeHtml(comment)}</div>` : ''}
+            </div>
+          `;
+        }
+      });
+      historyList.innerHTML = html;
+
+      document.querySelectorAll('.history-item:not(.editing) .del').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const id = parseInt(this.dataset.id, 10);
+          if (confirm('Удалить эту запись?')) deleteRecord(id);
+        });
+      });
+      document.querySelectorAll('.history-item:not(.editing) .edit').forEach(btn => {
+        btn.addEventListener('click', function() {
+          startEditing(parseInt(this.dataset.id, 10));
+        });
+      });
+      document.querySelectorAll('.history-item .comment').forEach(el => {
+        el.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const range = document.createRange();
+          range.selectNodeContents(this);
+          const sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(range);
+        });
+      });
+
+      document.querySelectorAll('.edit-form-inline').forEach(form => {
+        const id = parseInt(form.dataset.id, 10);
+        const saveBtn = form.querySelector('.save-edit');
+        const cancelBtn = form.querySelector('.cancel-edit');
+
+        const editCommentField = form.querySelector('.edit-comment');
+        if (editCommentField) {
+          const datalistId = `editSuggestions_${id}`;
+          const datalist = document.createElement('datalist');
+          datalist.id = datalistId;
+          editCommentField.setAttribute('list', datalistId);
+          form.appendChild(datalist);
+          commentHistory.forEach(text => {
+            const opt = document.createElement('option');
+            opt.value = text;
+            datalist.appendChild(opt);
+          });
+        }
+
+        saveBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          const employee = form.querySelector('.edit-employee').value;
+          const date = form.querySelector('.edit-date').value;
+          const duration = form.querySelector('.edit-duration').value;
+          const hoursVal = form.querySelector('.edit-hours').value;
+          const comment = form.querySelector('.edit-comment').value;
+          const penalty = form.querySelector('.edit-penalty').checked;
+          let hours = null;
+          if (duration === 'часы') {
+            const v = parseInt(hoursVal, 10);
+            if (!isNaN(v) && v > 0 && v <= 12) hours = v;
+            else { alert('Укажите часы от 1 до 12'); return; }
+          }
+          saveEdit(id, employee, date, duration, hours, comment, penalty);
+        });
+        cancelBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          cancelEditing();
+        });
+        form.querySelector('.edit-comment').addEventListener('keydown', function(e) {
+          if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+            e.preventDefault();
+            saveBtn.click();
+          }
+        });
+      });
+
+      updateHistoryToggle();
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function toggleHistoryCollapse() {
+      historyCollapsed = !historyCollapsed;
+      saveToStorage();
+      updateHistoryToggle();
+    }
+
+    function updateHistoryToggle() {
+      if (historyCollapsed) {
+        historyList.classList.add('collapsed');
+        historyArrow.classList.remove('open');
+      } else {
+        historyList.classList.remove('collapsed');
+        historyArrow.classList.add('open');
+      }
+    }
+
+    function startEditing(id) {
+      editingId = id;
+      if (historyCollapsed) {
+        historyCollapsed = false;
+        saveToStorage();
+      }
+      renderAll();
+    }
+
+    function cancelEditing() {
+      editingId = null;
+      renderAll();
+    }
+
+    function saveEdit(id, employee, date, duration, hours, comment, penalty) {
+      const record = records.find(r => r.id === id);
+      if (!record) return;
+      if (!date) { alert('Укажите дату'); return; }
+      record.employee = employee;
+      record.date = date;
+      record.duration = duration;
+      record.hours = hours;
+      record.comment = comment || '';
+      record.penalty = penalty || false;
+      if (comment && comment.trim()) addCommentToHistory(comment.trim());
+      editingId = null;
+      saveToStorage();
+      renderAll();
+    }
+
+    function deleteRecord(id) {
+      if (editingId === id) editingId = null;
+      records = records.filter(r => r.id !== id);
+      saveToStorage();
+      renderAll();
+    }
+
+    function updateSuggestion() {
+      const suggestion = getSuggestion();
+      const suggestionText = document.getElementById('suggestionText');
+      if (suggestionText) suggestionText.textContent = suggestion || '—';
+    }
+
+    function getSuggestion() {
+      if (employees.length === 0) return 'Нет данных';
+      const countMap = {};
+      employees.forEach(name => countMap[name] = getEffectiveCount(name));
+      let minCount = Infinity;
+      let candidates = [];
+      for (const [name, count] of Object.entries(countMap)) {
+        if (count < minCount) { minCount = count; candidates = [name]; }
+        else if (count === minCount) candidates.push(name);
+      }
+      return candidates.length ? candidates.join(' или ') : '—';
+    }
+
+    function addRecordFromModal() {
+      const employee = modalEmployeeSelect.value;
+      if (!employee) { alert('Выберите сотрудника'); return; }
+      const duration = modalDurationType.value;
+      let hours = null;
+      if (duration === 'часы') {
+        const val = parseInt(modalHoursInput.value, 10);
+        if (!isNaN(val) && val > 0 && val <= 12) hours = val;
+        else { alert('Укажите часы от 1 до 12'); return; }
+      }
+      let date = modalDateInput.value;
+      if (!date) {
+        const today = new Date();
+        date = today.toISOString().slice(0,10);
+      }
+      const comment = modalCommentInput.value.trim();
+      const penalty = modalPenaltyCheck.checked;
+
+      if (penalty && !comment) {
+        if (!confirm('Вы отметили отправку как внеочередную (штрафную). Рекомендуется указать причину в комментарии. Продолжить без комментария?')) {
+          modalCommentInput.focus();
+          return;
+        }
+      }
+
+      records.push({ id: nextId++, employee, date, duration, hours, comment, penalty });
+      if (comment) addCommentToHistory(comment);
+
+      if (commentHistory.length > 0) modalCommentInput.value = commentHistory[0];
+      else modalCommentInput.value = '';
+
+      modalPenaltyCheck.checked = false;
+      saveToStorage();
+      renderAll();
+      showToast('✅ Запись добавлена');
+      closeModal();
+    }
+
+    function openModal() {
+      modalOverlay.classList.add('active');
+      const today = new Date().toISOString().slice(0,10);
+      modalDateInput.value = today;
+      modalCommentInput.value = commentHistory.length > 0 ? commentHistory[0] : '';
+      modalPenaltyCheck.checked = false;
+      modalHoursInput.value = 12;
+      modalDurationType.value = 'полный день';
+      updateModalHoursVisibility();
+      renderModalEmployeeSelect();
+      updateCommentSuggestions();
+    }
+
+    function closeModal() {
+      modalOverlay.classList.remove('active');
+    }
+
+    function openSettings() {
+      settingsOverlay.classList.add('active');
+      renderSettingsEmployeeList();
+      settingsNewEmployeeInput.value = '';
+    }
+
+    function closeSettings() {
+      settingsOverlay.classList.remove('active');
+    }
+
+    function addEmployee(name) {
+      const trimmed = name.trim();
+      if (!trimmed) return alert('Введите имя');
+      if (employees.includes(trimmed)) return alert('Такой сотрудник уже есть');
+      employees.push(trimmed);
+      saveToStorage();
+      renderAll();
+      renderSettingsEmployeeList();
+      showToast('✅ Сотрудник добавлен');
+    }
+
+    function removeEmployee(name) {
+      if (employees.length <= 1) return alert('Нельзя удалить последнего сотрудника');
+      const hasRecords = records.some(r => r.employee === name);
+      if (hasRecords) {
+        if (!confirm(`У сотрудника ${name} есть записи в истории. Удалить его и все связанные записи?`)) return;
+        records = records.filter(r => r.employee !== name);
+        if (editingId !== null) {
+          const stillExists = records.some(r => r.id === editingId);
+          if (!stillExists) editingId = null;
+        }
+      }
+      employees = employees.filter(e => e !== name);
+      delete resetAmounts[name];
+      saveToStorage();
+      renderAll();
+      renderSettingsEmployeeList();
+    }
+
+    function clearHistory() {
+      if (records.length === 0) return;
+      if (confirm('Удалить всю историю?')) {
+        records = [];
+        nextId = 1;
+        editingId = null;
+        resetAmounts = {};
+        saveToStorage();
+        renderAll();
+        showToast('🗑️ История очищена');
+      }
+    }
+    function resetStats() { clearHistory(); }
+
+    function resetEmployeeCounter(name) {
+      if (!employees.includes(name)) return;
+      const current = getEffectiveCount(name);
+      if (current <= 0) {
+        alert(`Счётчик сотрудника «${name}» уже равен 0.`);
+        return;
+      }
+      if (!confirm(`Уменьшить счётчик сотрудника «${name}» на 1? Сейчас: ${current}.`)) return;
+      resetAmounts[name] = (resetAmounts[name] || 0) + 1;
+      saveToStorage();
+      renderAll();
+      renderSettingsEmployeeList();
+      showToast('🔄 Счётчик уменьшен');
+    }
+
+    function exportData() {
+      const data = { employees, records, historyCollapsed, commentHistory, resetAmounts };
+      const json = JSON.stringify(data, null, 2);
+      const blob = new Blob([json], {type: 'application/json'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `line_data_${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    function importData(file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (data.employees && Array.isArray(data.employees) && data.records && Array.isArray(data.records)) {
+            if (confirm(`Импортировать ${data.records.length} записей и ${data.employees.length} сотрудников?`)) {
+              employees = data.employees;
+              records = data.records;
+              let max = 0;
+              records.forEach(r => { if (r.id > max) max = r.id; });
+              nextId = max + 1;
+              editingId = null;
+              if (data.historyCollapsed !== undefined) historyCollapsed = data.historyCollapsed;
+              if (data.commentHistory && Array.isArray(data.commentHistory)) {
+                commentHistory = data.commentHistory;
+              } else {
+                commentHistory = [];
+                records.forEach(r => {
+                  if (r.comment && r.comment.trim()) addCommentToHistory(r.comment.trim());
+                });
+              }
+              resetAmounts = (data.resetAmounts && typeof data.resetAmounts === 'object') ? data.resetAmounts : {};
+              saveToStorage();
+              renderAll();
+              showToast('📤 Данные импортированы');
+            }
+          } else {
+            alert('Неверный формат: ожидается { employees, records }');
+          }
+        } catch (err) {
+          alert('Ошибка чтения: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    openModalBtn.addEventListener('click', openModal);
+    modalCancelBtn.addEventListener('click', closeModal);
+    modalAddBtn.addEventListener('click', addRecordFromModal);
+    modalOverlay.addEventListener('click', function(e) {
+      if (e.target === this) closeModal();
+    });
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        if (modalOverlay.classList.contains('active')) closeModal();
+        if (settingsOverlay.classList.contains('active')) closeSettings();
+      }
+    });
+
+    settingsFab.addEventListener('click', openSettings);
+    settingsCloseBtn.addEventListener('click', closeSettings);
+    settingsOverlay.addEventListener('click', function(e) {
+      if (e.target === this) closeSettings();
+    });
+    settingsAddEmployeeBtn.addEventListener('click', function() {
+      addEmployee(settingsNewEmployeeInput.value);
+      settingsNewEmployeeInput.value = '';
+    });
+    settingsNewEmployeeInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        addEmployee(this.value);
+        this.value = '';
+      }
+    });
+
+    clearHistoryBtn.addEventListener('click', clearHistory);
+    resetStatsBtn.addEventListener('click', resetStats);
+    exportBtn.addEventListener('click', exportData);
+    importBtn.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', function(e) {
+      if (this.files && this.files.length > 0) {
+        importData(this.files[0]);
+        this.value = '';
+      }
+    });
+
+    toggleHistory.addEventListener('click', toggleHistoryCollapse);
+
+    modalDurationType.addEventListener('change', function() {
+      updateModalHoursVisibility();
+    });
+
+    loadFromStorage();
+    renderAll();
+
+    // ===== Регистрация Service Worker =====
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch(() => {
+          // SW не зарегистрирован — не критично, приложение работает и без него
+        });
+      });
+    }
+  })();
+</script>
+</body>
+</html>
